@@ -3,6 +3,7 @@ package vuttr.domain.user;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,23 +12,25 @@ import java.util.Collection;
 import java.util.List;
 
 @Data
-@Table(name = "user")
+@Table(name = "users", schema = "public")
 @Entity
+@NoArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String login;
+    private String username;
     private String email;
     private String password;
     private String bio;
+    @Enumerated(EnumType.STRING)
     private UserRole role;
 
 
     public User(RegisterDTO registerDTO, String encryptedPassword) {
-        this.login = registerDTO.username();
+        this.username = registerDTO.username();
         this.email = registerDTO.email();
         this.password = encryptedPassword;
         this.role = registerDTO.role();
@@ -44,7 +47,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return login;
+        return username;
     }
 
     @Override

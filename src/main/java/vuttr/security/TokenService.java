@@ -24,7 +24,7 @@ public class TokenService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             String token = JWT.create()
                     .withIssuer("myessen")
-                    .withSubject(user.getLogin())
+                    .withSubject(user.getUsername())
                     .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.of("+00:00")))
                     .withExpiresAt(genExpirationDate())
                     .withClaim("email", user.getEmail())
@@ -35,6 +35,7 @@ public class TokenService {
         }
     }
     public String validateToken(String token) {
+        token = recoverToken(token); //removing "Bearer " characters if any
         Algorithm algorithm = Algorithm.HMAC256(secret);
          DecodedJWT decoded = JWT.require(algorithm)
                 .withIssuer("myessen")
@@ -43,7 +44,9 @@ public class TokenService {
          Instant issuedAt = decoded.getIssuedAtAsInstant();
          return subject;
     }
-
+    private String recoverToken(String token) {
+        return token.replace("Bearer ", "");
+    }
     private Instant genExpirationDate() {
         return LocalDateTime.now().plusHours(5).toInstant(ZoneOffset.of("+00:00"));
     }
