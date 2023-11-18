@@ -12,8 +12,5 @@ public class VuttrApplication {
 		SpringApplication.run(VuttrApplication.class, args);
 	}
 
-	@Bean
-	FlywayMigrationStrategy flywayMigrationStrategy() {
-		return flyway -> flyway.migrate();
-	}
+
 }

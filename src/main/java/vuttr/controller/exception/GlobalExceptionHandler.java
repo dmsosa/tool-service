@@ -12,6 +12,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.util.WebUtils;
 import vuttr.controller.exception.tool.ToolExistsException;
 import vuttr.controller.exception.tool.ToolNotFoundException;
+import vuttr.controller.exception.user.UserExistsException;
+import vuttr.controller.exception.user.UserNotFoundException;
 import vuttr.domain.ApiError;
 
 import java.util.Collections;
@@ -27,18 +29,42 @@ public class GlobalExceptionHandler {
 
 
         if (exception instanceof ToolExistsException) {
+            HttpStatus status = HttpStatus.CONFLICT;
+            ToolExistsException tee = (ToolExistsException) exception;
+            return ToolExistsExceptionHandler(tee, headers, status, request);
+        } else if (exception instanceof ToolNotFoundException) {
             HttpStatus status = HttpStatus.NOT_FOUND;
             ToolNotFoundException tnfe = (ToolNotFoundException) exception;
             return ToolNotFoundExceptionHandler(tnfe, headers, status, request);
+        } else if (exception instanceof UserExistsException) {
+            HttpStatus status = HttpStatus.CONFLICT;
+            UserExistsException uee = (UserExistsException) exception;
+            return UserExistsExceptionHandler(uee, headers, status, request);
+        } else if (exception instanceof UserNotFoundException) {
+            HttpStatus status = HttpStatus.NOT_FOUND;
+            UserNotFoundException unfe = (UserNotFoundException) exception;
+            return UserNotFoundExceptionHandler(unfe, headers, status, request);
         }
         else {
             HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
             return internalExceptionHandler(exception, null, headers, status, request);
         }
     }
+    protected ResponseEntity<ApiError> ToolExistsExceptionHandler(ToolExistsException tee, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        List<String> error = Collections.singletonList(tee.getMessage());
+        return internalExceptionHandler(tee, new ApiError(error), headers, status, request);
+    }
     protected ResponseEntity<ApiError> ToolNotFoundExceptionHandler(ToolNotFoundException tnfe, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<String> error = Collections.singletonList(tnfe.getMessage());
         return internalExceptionHandler(tnfe, new ApiError(error), headers, status, request);
+    }
+    protected ResponseEntity<ApiError> UserExistsExceptionHandler(UserExistsException uee, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        List<String> error = Collections.singletonList(uee.getMessage());
+        return internalExceptionHandler(uee, new ApiError(error), headers, status, request);
+    }
+    protected ResponseEntity<ApiError> UserNotFoundExceptionHandler(UserNotFoundException unfe, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        List<String> error = Collections.singletonList(unfe.getMessage());
+        return internalExceptionHandler(unfe, new ApiError(error), headers, status, request);
     }
     protected ResponseEntity<ApiError> internalExceptionHandler(Exception exception, @Nullable ApiError body,
                                                                 HttpHeaders headers,

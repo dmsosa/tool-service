@@ -1,5 +1,6 @@
 package vuttr.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,29 +12,31 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import vuttr.controller.exception.user.UserExistsException;
+import vuttr.controller.exception.user.UserNotFoundException;
 import vuttr.domain.user.*;
 import vuttr.security.TokenService;
 import vuttr.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private Logger logger = LoggerFactory.getLogger(AuthController.class);
-
-    @Autowired
-    UserService userService;
+    private final UserService userService;
+    private final TokenService tokenService;
 
     @Autowired
     AuthenticationManager authenticationManager;
-    @Autowired
-    TokenService tokenService;
 
     //Get current user
     @GetMapping("/login")
-    ResponseEntity<LoginDTO> loggedUser(@RequestHeader HttpHeaders header) {
+    ResponseEntity<LoginDTO> loggedUser(@RequestHeader HttpHeaders header) throws UserNotFoundException  {
+
         String token = header.get("Authorization").get(0)
                 .replace("Bearer ","");
         logger.info("token: ISSSS " + token);
@@ -44,7 +47,11 @@ public class AuthController {
     };
 
     @PostMapping("/login")
-    ResponseEntity<LoginDTO> logUser(@RequestBody AuthorizationDTO authDTO) throws Exception {
+    ResponseEntity<LoginDTO> logUser(@RequestBody AuthorizationDTO authDTO) throws UserNotFoundException, Exception {
+        if (authDTO.login() == null || authDTO.password() == null) {
+            throw new Exception("Missing parameters: Logind and Password are required");
+        }
+        UserDetails user = userService.findByLogin(authDTO.login()); //checking if user exists
         var usernamePassword = new UsernamePasswordAuthenticationToken(authDTO.login(), authDTO.password());
         var auth = authenticationManager.authenticate(usernamePassword);
         var token = tokenService.generateToken((User) auth.getPrincipal());
@@ -52,20 +59,19 @@ public class AuthController {
         return new ResponseEntity<>(loginResponse, HttpStatus.OK);
     }
     @PostMapping("/register")
-    ResponseEntity<User> registerUser(@RequestBody RegisterDTO registerDTO) throws Exception {
+    ResponseEntity<User> registerUser(@RequestBody RegisterDTO registerDTO) throws UserExistsException {
 
 
-        if (
-                userService.findByUsername(registerDTO.username()) != null ||
-                        userService.findByEmail(registerDTO.email()) != null
-        ) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (userService.existsByUsername(registerDTO.username())) {
+            throw new UserExistsException(registerDTO.username());
+        } else if (userService.existsByEmail(registerDTO.email())) {
+            throw new UserExistsException(registerDTO.email());
         }
 
         //In dateibank speichern
         String encryptedPassword = new BCryptPasswordEncoder().encode(registerDTO.password());
         User user = new User(registerDTO, encryptedPassword);
-        userService.saveUser(user);
+        user = (User) userService.createUser(user);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 

@@ -9,10 +9,10 @@ public class ToolNotFoundException extends Exception {
         this.message = String.format("Tool with title %s was not found", title);
     }
 
-    public static ToolExistsException createWith(Long id) {
+    public static ToolNotFoundException createWith(Long id) {
         return new ToolNotFoundException(id);
     }
-    public static ToolExistsException createWith(String title) {
+    public static ToolNotFoundException createWith(String title) {
         return new ToolNotFoundException(title);
     }
 

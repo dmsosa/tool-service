@@ -1,5 +1,6 @@
 package vuttr.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vuttr.controller.exception.tool.ToolExistsException;
@@ -12,10 +13,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ToolServiceImpl implements ToolService {
 
-    @Autowired
-    ToolRepository toolRepository;
+    private final ToolRepository toolRepository;
 
     @Override
     public List<Tool> getAllTools() {

@@ -3,5 +3,5 @@ id SERIAL PRIMARY KEY,
 title CHAR(50) UNIQUE NOT NULL,
 link TEXT NOT NULL,
 description CHAR(1500),
-tags ARRAY TEXT[]
+tags TEXT[]
 );

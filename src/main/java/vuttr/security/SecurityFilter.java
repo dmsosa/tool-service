@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import vuttr.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.Optional;
 
 
 @Service
@@ -28,8 +29,8 @@ public class SecurityFilter extends OncePerRequestFilter {
         var token = getToken(request);
         if (token != null) {
             String username = tokenService.validateToken(token);
-            UserDetails user = userRepository.findByUsername(username);
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            Optional<UserDetails> user = userRepository.findByUsername(username);
+            var authentication = new UsernamePasswordAuthenticationToken(user.get(), null, user.get().getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
