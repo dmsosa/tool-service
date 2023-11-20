@@ -28,7 +28,11 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-
+    public User(String username, String password, UserRole role) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
     public User(RegisterDTO registerDTO, String encryptedPassword) {
         this.username = registerDTO.username();
         this.email = registerDTO.email();

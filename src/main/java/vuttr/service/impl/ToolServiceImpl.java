@@ -1,7 +1,7 @@
 package vuttr.service.impl;
 
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vuttr.controller.exception.tool.ToolExistsException;
 import vuttr.controller.exception.tool.ToolNotFoundException;
@@ -30,12 +30,12 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
-    public Tool createTool(Tool tool) throws ToolExistsException {
-        if (toolRepository.existsByTitle(tool.getTitle())) {
+    public void createTool(Tool tool) throws ToolExistsException {
+        if (toolRepository.existsByTitle(tool.getTitle().toLowerCase())) {
             throw new ToolExistsException(tool.getTitle());
         }
+        tool.setTitle(tool.getTitle().toLowerCase()); // changing to lowercase title
         toolRepository.save(tool);
-        return tool;
     }
 
     @Override

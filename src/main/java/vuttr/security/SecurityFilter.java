@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,8 @@ import java.util.Optional;
 @Service
 public class SecurityFilter extends OncePerRequestFilter {
 
+    Logger logger = LoggerFactory.getLogger(SecurityFilter.class);
+
     @Autowired
     TokenService tokenService;
     @Autowired
@@ -29,6 +33,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         var token = getToken(request);
         if (token != null) {
             String username = tokenService.validateToken(token);
+            logger.info(username+" USER!!");
             Optional<UserDetails> user = userRepository.findByUsername(username);
             var authentication = new UsernamePasswordAuthenticationToken(user.get(), null, user.get().getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -36,7 +41,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String getToken(HttpServletRequest request) {
+    public String getToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
         if (authHeader == null) return null;
         return authHeader.replace("Bearer ","");

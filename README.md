@@ -23,3 +23,9 @@ Tools, Users
 #### Dokumentation mit Swagger
 
 Wir haben der Dokumente unseres Programm mit Swagger gerstellt
+
+#### How to install
+
+Du kannst dieses Repo duplizieren
+
+
