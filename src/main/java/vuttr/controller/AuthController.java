@@ -52,7 +52,8 @@ public class AuthController {
             throw new Exception("Missing parameters: Logind and Password are required");
         }
         UserDetails user = userService.findByLogin(authDTO.login()); //checking if user exists
-        var usernamePassword = new UsernamePasswordAuthenticationToken(authDTO.login(), authDTO.password());
+        String username = user.getUsername();
+        var usernamePassword = new UsernamePasswordAuthenticationToken(username, authDTO.password());
         var auth = authenticationManager.authenticate(usernamePassword);
         var token = tokenService.generateToken((User) auth.getPrincipal());
         LoginDTO loginResponse = new LoginDTO(token, (User) auth.getPrincipal());

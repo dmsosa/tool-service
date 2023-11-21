@@ -1,6 +1,7 @@
 package vuttr.domain.user;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.List;
 @Table(name = "users", schema = "public")
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class User implements UserDetails {
 
@@ -39,6 +41,15 @@ public class User implements UserDetails {
         this.password = encryptedPassword;
         this.role = registerDTO.role();
     }
+
+    public User(String id, String username, String email, String password, UserRole role) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == UserRole.BASIC) {

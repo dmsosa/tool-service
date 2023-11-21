@@ -33,10 +33,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetails findByLogin(String login) throws UserNotFoundException  {
-        if (userRepository.findByUsername(login).isEmpty()) {
+        if (!userRepository.existsByUsername(login) && !userRepository.existsByEmail(login)) {
             throw new UserNotFoundException(login);
         }
-        return userRepository.findByUsername(login).get();
+        if (userRepository.findByUsername(login).isPresent()) {
+            return userRepository.findByUsername(login).get();
+        } else {
+            return userRepository.findByEmail(login).get();
+        }
+
     }
 
     @Override
