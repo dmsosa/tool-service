@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.annotation.SecurityTestExecutionListeners;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithSecurityContext;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.Optional;
 
 @WebMvcTest(controllers = ToolController.class)
-@ContextConfiguration(classes = {SecurityContextTest.class, SecurityConfiguration.class, SecurityFilter.class, TokenService.class})
+@WithMyUser
 public class ToolControllerTest {
 
 
