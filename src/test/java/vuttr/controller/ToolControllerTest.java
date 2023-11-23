@@ -44,19 +44,14 @@ import java.util.List;
 import java.util.Optional;
 
 @WebMvcTest(controllers = ToolController.class)
-@WithMyUser
 public class ToolControllerTest {
+
+
 
 
 
     @MockBean
     ToolService toolService; //toolController depends on toolService
-    @MockBean
-    UserRepository userRepository; //securityFilter depends on userRepository
-    @Autowired
-    TokenService tokenService; //wir brauch ein Token, um die Anfrage zu senden
-    @Autowired
-    AuthenticationManager authenticationManager; //Wir brauch ein testUser zu abnehmen
 
     @Autowired
     MockMvc mockMvc; //mockMvc to perform pseudo http requests
@@ -87,19 +82,12 @@ public class ToolControllerTest {
         toolList.add(tool6);
         toolList.add(tool7);
 
-        //Generating token
-        testUser = new User("adasdwq", "testUser", "testUser@gmail.com", "123", UserRole.ADMIN);
-        testToken = tokenService.generateToken((User) testUser);
     }
     @Test
     void whenGetAllTools_thenReturnList() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        Mockito.when(userRepository.findByUsername("testUser")).thenReturn(Optional.ofNullable(testUser));
-        headers.add("Authorization", testToken);
         Mockito.when(toolService.getAllTools()).thenReturn(toolList);
         Mockito.when(toolService.getToolById((long) 2)).thenReturn(toolList.get(2));
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/2")
-                        .headers(headers))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/2"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));

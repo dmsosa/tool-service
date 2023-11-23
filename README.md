@@ -22,7 +22,9 @@ Tools, Users
 
 #### Dokumentation mit Swagger
 
-Wir haben der Dokumente unseres Programm mit Swagger gerstellt
+Wir haben der Dokumente unseres Programm mit Swagger und SpringDoc-OpenAPI gerstellt, also es is nitch Programatlich definiert, sorndern ein .yaml Datei als die Einstellungen unseres Dokumentation.
+
+We have created the documentation of our program with Swagger and SpringDoc-OpenAPI, also it is not defined programatically, but we used a .yaml file as configuration for our documentation.
 
 #### How to install
 
