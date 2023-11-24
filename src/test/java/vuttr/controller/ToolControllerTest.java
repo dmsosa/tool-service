@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.Optional;
 
 @WebMvcTest(controllers = ToolController.class)
+@ContextConfiguration(classes = SecurityContextTest.class)
 public class ToolControllerTest {
-
 
 
 
@@ -81,10 +81,10 @@ public class ToolControllerTest {
         toolList.add(tool5);
         toolList.add(tool6);
         toolList.add(tool7);
-
     }
     @Test
     void whenGetAllTools_thenReturnList() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
         Mockito.when(toolService.getAllTools()).thenReturn(toolList);
         Mockito.when(toolService.getToolById((long) 2)).thenReturn(toolList.get(2));
         mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/2"))
