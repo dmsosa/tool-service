@@ -33,7 +33,6 @@ import vuttr.domain.user.User;
 import vuttr.domain.user.UserRole;
 import vuttr.repository.UserRepository;
 import vuttr.security.SecurityConfiguration;
-import vuttr.security.SecurityContextTest;
 import vuttr.security.SecurityFilter;
 import vuttr.security.TokenService;
 import vuttr.service.ToolService;
@@ -44,10 +43,9 @@ import java.util.List;
 import java.util.Optional;
 
 @WebMvcTest(controllers = ToolController.class)
-@ContextConfiguration(classes = SecurityContextTest.class)
 public class ToolControllerTest {
 
-
+//This will use our SecurityConfiguration.
 
 
     @MockBean

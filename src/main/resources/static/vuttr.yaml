@@ -268,8 +268,8 @@ components:
       description: user's role determines how the user can interact with the API
       enum:
         - ADMIN
-        - USER
-      default: USER
+        - BASIC
+      default: BASIC
     RegisterDTO:
       type: object
       properties:
