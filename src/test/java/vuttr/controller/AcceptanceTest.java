@@ -1,5 +1,6 @@
 package vuttr.controller;
 
+import org.antlr.v4.runtime.Token;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,21 +8,19 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.test.web.client.match.MockRestRequestMatchers;
-import org.springframework.test.web.client.response.MockRestResponseCreators;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.WebApplicationContext;
+import vuttr.domain.user.User;
+import vuttr.repository.UserRepository;
 import vuttr.security.TokenService;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,20 +34,39 @@ public class AcceptanceTest {
     @Autowired
     MockMvc mockMvc;
     @Autowired
-    ToolController toolController;
+    TokenService tokenService;
+    @Autowired
+    UserRepository userRepository;
 
-
-    @Test
-    void contextLoads() throws Exception {
-        assertThat(toolController).isNotNull();
+    @BeforeAll
+    void setup() throws Exception {
+        UserDetails user = userRepository.findByUsername("test").get();
+        testToken = tokenService.generateToken((User) user);
     }
 
     @Test
-    @DisplayName("Get all tools")
-    void whenNoToken_thenStatusIsForbidden() throws Exception {
+    @DisplayName("GET: Forbidden")
+    void givenGet_whenNoToken_thenStatusIsForbidden() throws Exception {
         mockMvc.perform(get("/api/tools/"))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
+    @Test
+    @DisplayName("POST: Forbidden")
+    void givenPost_whenNoToken_thenStatusIsForbidden() throws Exception {
+        mockMvc.perform(post("/api/tools/"))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
 
+    @Test
+    @DisplayName("GET: Get all tools")
+    void whenValidToken_thenGetAllTools() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", testToken);
+        mockMvc.perform(get("/api/tools/")
+                .headers(headers))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
 }
