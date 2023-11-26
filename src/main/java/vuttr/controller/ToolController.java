@@ -1,7 +1,6 @@
 package vuttr.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +19,12 @@ public class ToolController {
 
     private final ToolService toolService;
 
-    @GetMapping("")
+    @GetMapping("/")
     ResponseEntity<List<Tool>> getAllTools() {
         return new ResponseEntity<>(toolService.getAllTools(), HttpStatus.OK);
     }
 
-    @PostMapping("")
+    @PostMapping("/")
     ResponseEntity<Tool> createTool(@RequestBody ToolDTO toolDTO) throws ToolExistsException {
         Tool tool = new Tool(toolDTO);
         toolService.createTool(tool);

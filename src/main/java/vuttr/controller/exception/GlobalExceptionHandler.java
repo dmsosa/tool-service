@@ -23,7 +23,6 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler
-
     public ResponseEntity<ApiError> exceptionHandler(Exception exception, WebRequest request) {
         HttpHeaders headers = new HttpHeaders(); //set Headers
 

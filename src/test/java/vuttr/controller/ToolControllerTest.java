@@ -1,68 +1,60 @@
 package vuttr.controller;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.ServletException;
+import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.test.context.annotation.SecurityTestExecutionListeners;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithSecurityContext;
-import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import vuttr.controller.exception.GlobalExceptionHandler;
+import vuttr.controller.exception.tool.ToolExistsException;
 import vuttr.domain.tool.Tool;
-import vuttr.domain.user.User;
-import vuttr.domain.user.UserRole;
-import vuttr.repository.UserRepository;
+import vuttr.domain.tool.ToolDTO;
+import vuttr.repository.ToolRepository;
 import vuttr.security.SecurityConfiguration;
 import vuttr.security.SecurityFilter;
-import vuttr.security.TokenService;
 import vuttr.service.ToolService;
 
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
-@WebMvcTest(controllers = ToolController.class)
+
+@WebMvcTest(controllers = {ToolController.class})
+@ContextConfiguration(classes = {SecurityConfiguration.class})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ToolControllerTest {
 
-//This will use our SecurityConfiguration.
-
-
+//This will use our TestSecurityConfiguration.
     @MockBean
     ToolService toolService; //toolController depends on toolService
 
-    @Autowired
-    MockMvc mockMvc; //mockMvc to perform pseudo http requests
+    //Mocking Security Beans so all requests are permitted
+    @MockBean
+    SecurityFilter securityFilter;
+    @MockBean
+    SecurityFilterChain securityFilterChain;
 
-    //Injecting mocks
-    @InjectMocks
-    ToolController toolController;
+    private MockMvc mockMvc; //mockMvc to perform pseudo http requests
+
 
     private List<Tool> toolList = new ArrayList<Tool>(); //fake List our toolService will work with
-    private String testToken; //fake token for our testUser
-    private UserDetails testUser; //test User
-
-    @BeforeEach //populate list and generate token for testUser
+    @BeforeAll
+    //populate list
     void setUp() throws Exception {
         //Populating list
         Tool tool1 = new Tool("Watch", "watch.com", "Always in time", Arrays.asList("Timer","O-clock"));
@@ -79,15 +71,61 @@ public class ToolControllerTest {
         toolList.add(tool5);
         toolList.add(tool6);
         toolList.add(tool7);
+
+        //Build our Mock
+        this.mockMvc = MockMvcBuilders.standaloneSetup(new ToolController(toolService)).build();
+
     }
     @Test
+    @DisplayName("Get All Tools")
     void whenGetAllTools_thenReturnList() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
         Mockito.when(toolService.getAllTools()).thenReturn(toolList);
-        Mockito.when(toolService.getToolById((long) 2)).thenReturn(toolList.get(2));
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/2"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
+    }
+    @Test
+    @DisplayName("Get Specific Tool")
+    void whenGetExistingTool_thenReturnTool() throws Exception {
+        Mockito.when(toolService.getToolById((long) 2)).thenReturn(toolList.get(2));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/tools/"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
+        Mockito.verify(toolService).getToolById((long) 2);
+
+    }
+    @Test
+    @DisplayName("Create A Tool")
+    void whenPostNewTool_thenReturnTool() throws Exception {
+        ToolDTO toolDTO = new ToolDTO("newTool", "Link", "A new wonderful tool", Arrays.asList("Wunderbar","Schon","Tranquillement"));
+        Tool newTool = new Tool(toolDTO);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(newTool);
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/tools/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.content().json(json));
+    }
+    @Test
+    @DisplayName("Tool Already Exists")
+    void whenPostExistingTool_thenThrowException() throws ToolExistsException, Exception {
+        ToolDTO toolDTO = new ToolDTO("newTool", "Link", "A new wonderful tool", Arrays.asList("Wunderbar","Schon","Tranquillement"));
+        Tool newTool = new Tool(toolDTO);
+        ObjectMapper objectMapper = new ObjectMapper();
+        Mockito.doThrow(ToolExistsException.class).when(toolService).createTool(Mockito.any(Tool.class));
+        String json = objectMapper.writeValueAsString(newTool);
+       Assertions.assertThrows(ServletException.class, () -> {
+            mockMvc.perform(MockMvcRequestBuilders.post("/api/tools/")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andDo(MockMvcResultHandlers.print())
+                    .andExpect(MockMvcResultMatchers.status().isConflict());
+        });
+       Mockito.verify(toolService).createTool(Mockito.any(Tool.class));
     }
 }
