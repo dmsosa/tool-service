@@ -24,8 +24,7 @@ import vuttr.controller.exception.tool.ToolExistsException;
 import vuttr.domain.tool.Tool;
 import vuttr.domain.tool.ToolDTO;
 import vuttr.repository.ToolRepository;
-import vuttr.security.SecurityConfiguration;
-import vuttr.security.SecurityFilter;
+
 import vuttr.service.ToolService;
 
 import java.security.Security;
@@ -35,7 +34,6 @@ import java.util.List;
 
 
 @WebMvcTest(controllers = {ToolController.class})
-@ContextConfiguration(classes = {SecurityConfiguration.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ToolControllerTest {
 
@@ -44,8 +42,7 @@ public class ToolControllerTest {
     ToolService toolService; //toolController depends on toolService
 
     //Mocking Security Beans so all requests are permitted
-    @MockBean
-    SecurityFilter securityFilter;
+
     @MockBean
     SecurityFilterChain securityFilterChain;
 
@@ -73,7 +70,6 @@ public class ToolControllerTest {
         toolList.add(tool7);
 
         //Build our Mock
-        this.mockMvc = MockMvcBuilders.standaloneSetup(new ToolController(toolService)).build();
 
     }
     @Test
