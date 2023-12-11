@@ -1,26 +1,26 @@
 package vuttr.controller;
 
+
 import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.DiscoveryClient;
 import com.netflix.discovery.EurekaClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vuttr.config.client.FoodClient;
+import org.springframework.web.reactive.function.client.WebClient;
 import vuttr.controller.exception.tool.ToolExistsException;
 import vuttr.controller.exception.tool.ToolNotFoundException;
-import vuttr.domain.tool.Food;
-import vuttr.domain.tool.Tool;
-import vuttr.domain.tool.ToolDTO;
-import vuttr.domain.tool.ToolWithFoodDTO;
+import vuttr.domain.tool.*;
 import vuttr.service.ToolService;
 
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tools")
@@ -28,22 +28,18 @@ import java.util.List;
 @Slf4j
 public class ToolController {
 
+
+
+    @Autowired
+    WebClient.Builder builder;
+
+    private final EurekaClient eurekaClient;
     private final ToolService toolService;
-    private final FoodClient foodClient;
-    private final EurekaClient discoveryClient;
     private final Logger logger = LoggerFactory.getLogger(ToolController.class);
+
+    // basic CRUD operations
     @GetMapping("/")
     ResponseEntity<List<Tool>> getAllTools() {
-        return new ResponseEntity<>(toolService.getAllTools(), HttpStatus.OK);
-    }
-
-    @GetMapping("/withfood/")
-    ResponseEntity<List<Tool>> getAllWithFood() {
-        List<Tool> toolList = toolService.getAllTools();
-        InstanceInfo instanceInfos = discoveryClient.getNextServerFromEureka("MYESSEN-SERVICE", false);
-
-        logger.info("Got instance: ", instanceInfos.getAppName());
-//        List<ToolWithFoodDTO> withFoodDTOList = toolList.stream().map((tool) -> new ToolWithFoodDTO(tool, foodClient.getByToolId(tool.getId()))).toList();
         return new ResponseEntity<>(toolService.getAllTools(), HttpStatus.OK);
     }
 
@@ -59,13 +55,6 @@ public class ToolController {
         Tool tool = toolService.getToolById(id);
         return new ResponseEntity<>(tool, HttpStatus.OK);
     }
-
-    @GetMapping("/withfood/{id}")
-    ResponseEntity<ToolWithFoodDTO> getToolWithFoodById(@PathVariable Long id) throws  ToolNotFoundException {
-        ToolWithFoodDTO withFoodDTO = new ToolWithFoodDTO(toolService.getToolById(id), foodClient.getByToolId(id));
-        return new ResponseEntity<>(withFoodDTO, HttpStatus.OK);
-    }
-
     @PutMapping("/{id}")
     ResponseEntity<Tool> updateTool(@PathVariable Long id, @RequestBody ToolDTO toolDTO) {
         Tool updatedTool = new Tool(toolDTO);
@@ -74,11 +63,37 @@ public class ToolController {
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity deleteTool(@PathVariable Long id) throws ToolNotFoundException {
+    ResponseEntity<?> deleteTool(@PathVariable Long id) throws ToolNotFoundException {
         toolService.deleteTool(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 
+    // methods with food
+    @GetMapping("{id}/withfood/")
+    ResponseEntity<ToolWithFoodDTO> getToolWithFoodById(@PathVariable Long id) throws  ToolNotFoundException {
+        Tool tool = toolService.getToolById(id);
+        List<Food> foodList = builder.build().get().uri("/api/foods/toolId/"+id)
+                .retrieve()
+                .bodyToMono(FoodClientResponse.class)
+                .block().getFoodList();
+        return new ResponseEntity<>(new ToolWithFoodDTO(tool, foodList), HttpStatus.OK);
+    }
 
+    @GetMapping("/withfood/")
+    ResponseEntity<List<ToolWithFoodDTO>> getAllWithFood() {
+        List<Tool> toolList = toolService.getAllTools();
+        List<InstanceInfo> instances = eurekaClient.getInstancesByVipAddress("MYESSEN-SERVICE", false);
+        InstanceInfo myInstance = instances.get(0);
+        String hostname  = myInstance.getHostName();
+        String port = String.valueOf(myInstance.getPort());
+        logger.info("Instance info\n"+myInstance.getMetadata().toString());
+        List<ToolWithFoodDTO> results = toolList.stream().map(
+                tool -> new ToolWithFoodDTO(tool,
+                        builder.build().get().uri("/api/foods/toolId/"+tool.getId())
+                                .retrieve()
+                                .bodyToMono(FoodClientResponse.class)
+                                .block().getFoodList())).collect(Collectors.toList());
+        return new ResponseEntity<>(results, HttpStatus.OK);
+    }
 }
