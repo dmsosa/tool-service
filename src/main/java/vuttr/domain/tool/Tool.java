@@ -1,5 +1,6 @@
 package vuttr.domain.tool;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,10 +16,19 @@ import java.util.List;
 public class Tool {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(example = "1")
     private Long id;
+
+    @Schema(example = "notion")
     private String title;
+
+    @Schema(example = "https://www.notion.so/")
     private String link;
+
+    @Schema(example = "Very useful notes, cheat sheets, plans and whatever you need to write down")
     private String description;
+
+    @Schema(example = "[\"Notes\", \"Studying\", \"Planning\", \"Organization\"]")
     private List<String> tags;
 
     public Tool(String title, String link, String description, List<String> tags) {

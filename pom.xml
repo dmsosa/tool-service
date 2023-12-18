@@ -56,6 +56,12 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>
+		<!--Cloud-->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
 		<!--Docs-->
 		<dependency>
 			<groupId>org.springdoc</groupId>
