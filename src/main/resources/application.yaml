@@ -1,5 +1,24 @@
+server:
+  port: 8081
+flyway:
+  locations: classpath:db/migration
+  schema: myessen
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
 spring:
-  application:
-    name: tool-service
-  config:
-    import: optional:configserver:http://localhost:8088
+  datasource:
+    password: pepeeselmejor
+    url: jdbc:postgresql://localhost:5432/myessen
+    username: postgres
+springdoc:
+  api-docs:
+    enabled: true
+  show-actuator: true
+  swagger-ui:
+    path: /swagger-ui.html
+application:
+  name: tool-service
+  version: 0.0.1-SNAPSHOT

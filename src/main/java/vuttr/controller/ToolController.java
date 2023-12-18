@@ -1,8 +1,7 @@
 package vuttr.controller;
 
 
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.EurekaClient;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -33,7 +32,6 @@ public class ToolController {
     @Autowired
     WebClient.Builder builder;
 
-    private final EurekaClient eurekaClient;
     private final ToolService toolService;
     private final Logger logger = LoggerFactory.getLogger(ToolController.class);
 
@@ -83,11 +81,6 @@ public class ToolController {
     @GetMapping("/withfood/")
     ResponseEntity<List<ToolWithFoodDTO>> getAllWithFood() {
         List<Tool> toolList = toolService.getAllTools();
-        List<InstanceInfo> instances = eurekaClient.getInstancesByVipAddress("MYESSEN-SERVICE", false);
-        InstanceInfo myInstance = instances.get(0);
-        String hostname  = myInstance.getHostName();
-        String port = String.valueOf(myInstance.getPort());
-        logger.info("Instance info\n"+myInstance.getMetadata().toString());
         List<ToolWithFoodDTO> results = toolList.stream().map(
                 tool -> new ToolWithFoodDTO(tool,
                         builder.build().get().uri("/api/foods/toolId/"+tool.getId())
